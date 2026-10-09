@@ -1,0 +1,21 @@
+{
+  "name": "routeplanning-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "format": "prettier --write src index.html vite.config.js package.json",
+    "format:check": "prettier --check src index.html vite.config.js package.json"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "prettier": "3.9.7",
+    "vite": "^6.1.0"
+  }
+}
