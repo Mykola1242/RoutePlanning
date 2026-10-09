@@ -171,6 +171,7 @@ def test_config_no_key_exposure_and_missing_key(client, monkeypatch, tmp_path):
 
 
 def mock_provider(monkeypatch, status=200, body=None, timeout=False):
+    monkeypatch.setattr(planner, "agent_request_limits", planner.AgentRequestLimits())
     requests = []
     real_client = httpx.Client
     def handler(request):

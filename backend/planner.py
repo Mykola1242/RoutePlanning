@@ -9,6 +9,9 @@ from pydantic import ValidationError
 
 from .missions import MissionProposal
 from .recovery import RecoveryDecision
+from .agent_limits import AgentRequestLimits
+
+agent_request_limits = AgentRequestLimits()
 
 ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 DEFAULT_MODEL = "anthropic/claude-haiku-5.5"
@@ -86,7 +89,7 @@ Explain the choice concisely without claiming a future route will certainly open
 def request_structured(prompt, context, schema, schema_name, max_tokens):
     key, model = settings()
     if not key:
-        raise PlannerError("Додайте OPENROUTER_API_KEY у .env в корені RoutePlanning.", 503)
+        raise PlannerError("Агент ще не підключений. Додайте OPENROUTER_API_KEY у налаштування сервера або локальний .env.", 503)
     payload = {
         "model": model,
         "messages": [
@@ -101,6 +104,13 @@ def request_structured(prompt, context, schema, schema_name, max_tokens):
             "schema": schema.model_json_schema(),
         }},
     }
+    # Shared by mission planning and recovery, across all sessions and visitors.
+    # Failed upstream attempts also count; local rejections never call the provider.
+    wait_seconds = agent_request_limits.reserve()
+    if wait_seconds:
+        raise PlannerError(
+            f"Досягнуто спільний ліміт звернень до демонстраційного агента. "
+            f"Спробуйте через {wait_seconds} с. Карта й ручна симуляція доступні.", 429)
     started = perf_counter()
     try:
         with httpx.Client(timeout=httpx.Timeout(30, connect=10)) as client:
@@ -110,13 +120,14 @@ def request_structured(prompt, context, schema, schema_name, max_tokens):
             )
         if response.status_code != 200:
             messages = {
-                401: "OpenRouter не прийняв API-ключ. Перевірте .env.",
-                402: "На OpenRouter недостатньо коштів або досягнуто ліміт ключа.",
+                401: "OpenRouter не прийняв API-ключ. Власнику сайту потрібно перевірити налаштування сервера.",
+                402: "Бюджет демонстраційного агента вичерпано: досягнуто ліміт ключа або недостатньо коштів OpenRouter. Карта й ручна симуляція доступні.",
                 429: "OpenRouter обмежив частоту запитів. Спробуйте пізніше.",
                 400: "OpenRouter відхилив параметри моделі або схему відповіді.",
                 404: "Модель або сумісний провайдер зараз недоступні.",
             }
-            raise PlannerError(messages.get(response.status_code, "OpenRouter тимчасово недоступний. Спробуйте пізніше."))
+            status = response.status_code if response.status_code in (402, 429) else 502
+            raise PlannerError(messages.get(response.status_code, "OpenRouter тимчасово недоступний. Спробуйте пізніше."), status)
         data = response.json()
         choice = data["choices"][0]
         if choice.get("finish_reason") != "stop":
