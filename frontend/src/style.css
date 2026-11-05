@@ -816,3 +816,17 @@ footer b {
   overflow: auto;
   max-height: 740px;
 }
+.experiment-panel { margin: 20px 0; padding: 22px; border: 1px solid #d8e2db; border-radius: 12px; background: white; }
+.experiment-panel summary { cursor: pointer; font-weight: 700; font-size: 18px; }
+.experiment-panel p { font-size: 14px; line-height: 1.5; }
+.experiment-controls { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin: 18px 0; }
+.experiment-controls label { display: flex; gap: 8px; align-items: center; }
+.experiment-controls select { padding: 9px; max-width: 260px; }
+.experiment-controls button { width: auto; padding: 12px 18px; }
+.experiment-table { overflow-x: auto; }
+.experiment-table table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.experiment-table th, .experiment-table td { padding: 12px; border: 1px solid #d8e2db; text-align: left; }
+.experiment-table th { background: #edf4ef; }
+.experiment-replays { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.experiment-replays article { min-width: 0; }
+.experiment-replays svg { width: 100%; border: 1px solid #d8e2db; }

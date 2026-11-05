@@ -159,6 +159,16 @@ def command(key: str, payload: Command):
         return sim.snapshot()
 
 
+from .experiment_api import make_router
+app.include_router(make_router(planner_slot))
+
 dist = Path(__file__).resolve().parents[1] / "frontend" / "dist"
 if dist.is_dir():
+    from fastapi.responses import FileResponse
+
+    @app.get("/lab", include_in_schema=False)
+    @app.get("/lab/", include_in_schema=False)
+    def laboratory_page():
+        return FileResponse(dist / "index.html")
+
     app.mount("/", StaticFiles(directory=dist, html=True), name="frontend")

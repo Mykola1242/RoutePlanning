@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import './style.css';
 import MissionPanel from './MissionPanel';
+import ExperimentPanel from './ExperimentPanel';
 
 const names = {
   idle: 'Очікує ціль',
@@ -230,11 +231,11 @@ function App() {
       <div className="workspace">
         <header>
           <div className="brand">
-            RoutePlanning <span>/</span> <small>Лабораторія місій</small>
+            RoutePlanning <span>/</span> <small>Симуляція місій</small>
           </div>
           <div className="local">
             <span />
-            Локальна симуляція
+            <a href="/lab">Лабораторія →</a>
           </div>
         </header>
         <main>
@@ -884,4 +885,26 @@ function App() {
   );
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+function Laboratory() {
+  return (
+    <div className="workspace">
+      <header>
+        <div className="brand">RoutePlanning <span>/</span> <small>Лабораторія</small></div>
+        <a href="/">← Основна симуляція</a>
+      </header>
+      <main>
+        <div className="heading">
+          <div>
+            <div className="eyebrow">ЕКСПЕРИМЕНТАЛЬНЕ СЕРЕДОВИЩЕ</div>
+            <h1>Порівняння стратегій</h1>
+            <p>Однакові сценарії для A*, правил і LLM. Вимірювання та відтворення результатів.</p>
+          </div>
+        </div>
+        <ExperimentPanel />
+      </main>
+    </div>
+  );
+}
+
+const laboratory = window.location.pathname.replace(/\/+$/, '') === '/lab';
+createRoot(document.getElementById('root')).render(laboratory ? <Laboratory /> : <App />);

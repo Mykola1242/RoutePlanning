@@ -40,6 +40,11 @@ def pause_for_operator(sim, message):
 
 
 def request_decision(sim):
+    if getattr(sim, "control_policy", "agent") == "rules":
+        apply_decision(sim, rule_decision(decision_context(sim)), {
+            "model": "fixed_rules", "latency_ms": 0, "cost_usd": 0,
+        })
+        return
     incident = sim.recovery
     if sim.recovery_calls >= MAX_MISSION_CALLS or incident["calls"] >= MAX_INCIDENT_CALLS:
         pause_for_operator(sim, "Ліміт звернень агента вичерпано. Звільніть прохід і продовжте місію або скасуйте її.")
@@ -54,6 +59,10 @@ def request_decision(sim):
 
 
 def monitor(sim, action, old_position):
+    if getattr(sim, "control_policy", "agent") == "astar":
+        if sim.mission and sim.mission["status"] == "blocked":
+            sim.mission["status"], sim.status = "running", "waiting"
+        return
     mission = sim.mission
     if not mission or mission["status"] in ("draft", "completed", "cancelled"):
         if sim.recovery and mission and mission["status"] in ("completed", "cancelled"):
@@ -147,3 +156,19 @@ def apply_decision(sim, decision, stats):
         sim.recovery["status"] = "resolved"
         sim.mission["status"] = "running"
         sim.begin_mission_step()
+
+
+def rule_decision(context):
+    """Transparent comparator using the same facts and permissions as the LLM."""
+    allowed = context["allowed_actions"]
+    if context["route_available_now"] and "retry_route" in allowed:
+        action = "retry_route"
+    elif not context["static_route_exists"]:
+        action = "ask_operator"
+    elif "wait" in allowed:
+        action = "wait"
+    elif "detour_base" in allowed:
+        action = "detour_base"
+    else:
+        action = "ask_operator"
+    return RecoveryDecision(action=action, reason=f"Фіксоване правило: {action}.")
